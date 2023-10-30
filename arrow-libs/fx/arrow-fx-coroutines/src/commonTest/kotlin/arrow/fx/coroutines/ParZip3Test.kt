@@ -7,7 +7,6 @@ import arrow.fx.coroutines.awaitExitCase
 import arrow.fx.coroutines.leftException
 import arrow.fx.coroutines.parZip
 import arrow.fx.coroutines.throwable
-import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
@@ -21,9 +20,12 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.CoroutineScope
-
-class ParZip3Test : StringSpec({
-    "parZip 3 runs in parallel" {
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+    
+class ParZip3Test {
+    @Test
+    fun parZip3RunsInParallel() = runTest {
       checkAll(Arb.int(), Arb.int(), Arb.int()) { a, b, c ->
         val r = Atomic("")
         val modifyGate1 = CompletableDeferred<Unit>()
@@ -50,8 +52,9 @@ class ParZip3Test : StringSpec({
         r.get() shouldBe "$c$b$a"
       }
     }
-
-    "Cancelling parZip 3 cancels all participants" {
+    
+    @Test
+    fun CancellingParZip3CancelsAllParticipants() = runTest {
         val s = Channel<Unit>()
         val pa = CompletableDeferred<ExitCase>()
         val pb = CompletableDeferred<ExitCase>()
@@ -75,8 +78,9 @@ class ParZip3Test : StringSpec({
         pb.await().shouldBeTypeOf<ExitCase.Cancelled>()
         pc.await().shouldBeTypeOf<ExitCase.Cancelled>()
     }
-
-    "parZip 3 cancels losers if a failure occurs in one of the tasks" {
+    
+    @Test
+    fun parZip3CancelsLosersIfAFailureOccursInOneOfTheTasks() = runTest {
       checkAll(
         Arb.throwable(),
         Arb.element(listOf(1, 2, 3)),
@@ -104,8 +108,9 @@ class ParZip3Test : StringSpec({
         r should leftException(e)
       }
     }
-
-    "parZip CancellationException on right can cancel rest" {
+    
+    @Test
+    fun parZipCancellationExceptionOnRightCanCancelRest() = runTest {
       checkAll(Arb.string(), Arb.int(1..3)) { msg, cancel ->
         val s = Channel<Unit>()
         val pa = CompletableDeferred<ExitCase>()
@@ -129,4 +134,3 @@ class ParZip3Test : StringSpec({
       }
     }
   }
-)
